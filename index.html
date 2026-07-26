@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>每天一卦 · 易经小课堂</title>
+<style>
+  :root{
+    --base-font: 16px;            /* 小四号(约16px) */
+    --bg:#fbf7ee; --panel:#fffdf8; --ink:#2b2620; --muted:#7a7167;
+    --line:#e7ddc8; --accent:#b5602a; --accent2:#3a6b54; --soft:#f3ead7;
+    --good:#2e7d52; --bad:#b23b3b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"宋体","SimSun",serif;font-size:var(--base-font);line-height:1.9}
+  header{background:linear-gradient(135deg,#7a3b1d,#b5602a);color:#fff;
+    padding:14px 18px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header h1{margin:0;font-size:1.4rem;letter-spacing:2px}
+  header .sub{margin-top:2px;opacity:.92;font-size:.95rem}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .toolbar select,.toolbar button{font-family:inherit;font-size:.95rem;
+    padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+  .toolbar button:hover{border-color:var(--accent);color:var(--accent)}
+  .toolbar .spacer{flex:1}
+  #content{max-width:880px;margin:0 auto;padding:18px 18px 220px}
+  .review-card{background:var(--soft);border-left:5px solid var(--accent2);
+    padding:12px 16px;border-radius:10px;margin-bottom:18px}
+  .review-card .tag{color:var(--accent2);font-weight:bold}
+  h2.sec{color:var(--accent);border-bottom:2px solid var(--line);
+    padding-bottom:6px;margin-top:26px;font-size:1.2rem}
+  p.line{margin:10px 0;padding:4px 8px;border-radius:6px;transition:background .2s}
+  p.line.active{background:#fff3d6;outline:1px solid #e9c46a}
+  p.line:hover{background:#f6efdf;cursor:pointer}
+  .case-card{background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:12px 16px;margin:14px 0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .case-card .ct{color:var(--accent);font-weight:bold;font-size:1.05rem}
+  .mnemonic{background:#f0f6f1;border:1px solid #cfe3d4;border-radius:12px;
+    padding:12px 16px;margin:14px 0}
+  .mnemonic .mt{color:var(--accent2);font-weight:bold}
+  .mnemonic ol{margin:6px 0;padding-left:22px}
+  .mnemonic li{margin:4px 0}
+  .diagram-wrap{text-align:center;margin:14px 0;background:#fff;
+    border:1px solid var(--line);border-radius:12px;padding:14px}
+  .diagram-wrap svg{max-width:340px;width:100%;height:auto}
+  .diagram-wrap .cap{color:var(--muted);font-size:.92rem;margin-top:6px}
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin:18px 0}
+  .quiz .qh{color:var(--accent);font-weight:bold;font-size:1.1rem;margin-bottom:8px}
+  .q{margin:14px 0;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+  .q .qt{font-weight:bold;margin-bottom:8px}
+  .opt{display:block;width:100%;text-align:left;margin:6px 0;padding:8px 12px;
+    border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:.98rem}
+  .opt:hover{border-color:var(--accent)}
+  .opt.right{background:#e7f5ec;border-color:var(--good);color:var(--good)}
+  .opt.wrong{background:#fbeaea;border-color:var(--bad);color:var(--bad)}
+  .explain{margin-top:8px;color:var(--muted);font-size:.95rem}
+  .say-box textarea{width:100%;min-height:70px;font-family:inherit;font-size:.98rem;
+    padding:8px;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+  .mini-btn{margin-top:8px;padding:6px 12px;border:1px solid var(--accent);
+    background:#fff;color:var(--accent);border-radius:8px;cursor:pointer;font-family:inherit}
+  .mini-btn:hover{background:var(--accent);color:#fff}
+  #hexPanel{display:none;margin:14px 0;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px;max-height:70vh;overflow:auto}
+  #hexGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+  .hexcell{border:1px solid var(--line);border-radius:8px;padding:4px;text-align:center;background:#fdfaf2}
+  .hexcell svg{width:100%;height:auto;max-width:54px}
+  .hexcell .hn{font-size:.72rem;color:var(--muted)}
+  .hexcell .hnum{font-size:.62rem;color:#bbb}
+  /* 底部播放条（字幕不挡讲解：固定在底部，独立于正文） */
+  #player{position:fixed;left:0;right:0;bottom:0;background:rgba(255,253,248,.98);
+    border-top:2px solid var(--line);box-shadow:0 -2px 10px rgba(0,0,0,.08);
+    padding:8px 14px 10px;z-index:50}
+  #subtitle{min-height:30px;font-size:1.08rem;line-height:1.6;color:var(--ink);
+    background:#fff7e6;border:1px solid #ecd9a8;border-radius:8px;padding:6px 10px;margin-bottom:8px}
+  #subtitle .idx{color:var(--accent);font-size:.8rem;margin-right:6px}
+  .ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .ctrl button{font-family:inherit;font-size:1rem;padding:7px 12px;border:1px solid var(--line);
+    border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+  .ctrl button:hover{border-color:var(--accent);color:var(--accent)}
+  .ctrl button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ctrl input[type=range]{flex:1;min-width:120px}
+  .ctrl label{font-size:.9rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .ctrl select{font-family:inherit;font-size:.9rem;padding:5px 8px;border:1px solid var(--line);border-radius:8px}
+  .voice-note{font-size:.78rem;color:var(--muted);padding:2px 4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>每天一卦 · 易经小课堂</h1>
+  <div class="sub" id="lessonSub">跟曾仕强学易经 · 用生活里的智慧过好每一天</div>
+</header>
+
+<div class="toolbar">
+  <label>课程：
+    <select id="lessonSel"></select>
+  </label>
+  <button id="btnReview">📖 复习上节</button>
+  <button id="btnHex">🧭 六十四卦全图</button>
+  <button id="btnQuiz">❓ 去小测</button>
+  <span class="spacer"></span>
+  <button id="btnSmaller">A-</button>
+  <button id="btnBigger">A+</button>
+</div>
+
+<div id="content"></div>
+
+<div id="hexPanel">
+  <div style="font-weight:bold;color:var(--accent);margin-bottom:6px">先天六十四卦方阵</div>
+  <div style="font-size:.9rem;color:var(--muted);margin-bottom:10px">
+    横排是“上卦”，竖列是“下卦”。每一格：上边序号、卦名，下面是卦画（六条线，整条为阳、断开为阴）。
+  </div>
+  <div id="hexGrid"></div>
+</div>
+
+<!-- 底部播放条：字幕与正文分离，不遮挡讲解 -->
+<div id="player">
+  <div id="subtitle"><span class="idx"></span><span id="subText">点“播放”，听晓晓老师用神经网络语音讲给你听～</span></div>
+  <div class="ctrl">
+    <button id="btnPrev">⏮ 上一句</button>
+    <button id="btnPlay" class="primary">▶ 播放</button>
+    <button id="btnNext">下一句 ⏭</button>
+    <input type="range" id="seek" min="0" max="0" value="0" step="1" />
+    <label>语速 <input type="range" id="rate" min="0.6" max="1.3" value="1" step="0.05" style="width:90px"/></label>
+    <label><input type="checkbox" id="autoplay" checked/> 连播</label>
+    <label><input type="checkbox" id="showSub" checked/> 字幕</label>
+    <select id="voiceSel" title="选择语音（推荐：晓晓 XiaoxiaoNeural）"></select>
+  </div>
+  <div class="voice-note">提示：晓晓神经网络语音需在 Windows 的 Edge / Chrome 浏览器中才能发声；其他环境会自动改用系统中文语音。</div>
+</div>
+
+<script src="lessons.js"></script>
+<script>
+/* ============ 八卦与六十四卦基础数据 ============ */
+const TRIGRAMS = {
+  q:{name:'乾',py:'qián',nature:'天',family:'父',lines:[1,1,1],wisdom:'自强不息'},
+  d:{name:'兑',py:'duì',nature:'泽',family:'少女',lines:[0,1,1],wisdom:'真诚交友'},
+  l:{name:'离',py:'lí',nature:'火',family:'中女',lines:[1,0,1],wisdom:'相互依附'},
+  z:{name:'震',py:'zhèn',nature:'雷',family:'长男',lines:[0,0,1],wisdom:'临危不乱'},
+  x:{name:'巽',py:'xùn',nature:'风',family:'长女',lines:[1,1,0],wisdom:'谦逊顺从'},
+  w:{name:'坎',py:'kǎn',nature:'水',family:'中男',lines:[0,1,0],wisdom:'谨慎行事'},
+  g:{name:'艮',py:'gèn',nature:'山',family:'少男',lines:[1,0,0],wisdom:'言行有度'},
+  n:{name:'坤',py:'kūn',nature:'地',family:'母',lines:[0,0,0],wisdom:'厚德载物'}
+};
+const FUXI = ['q','d','l','z','x','w','g','n']; // 先天八卦顺序
+// 六十四卦（文王序号、卦名、上卦、下卦）
+const HEX = [
+  [1,'乾',   'q','q'],[2,'坤',   'n','n'],[3,'屯',   'w','z'],[4,'蒙',   'g','w'],
+  [5,'需',   'w','q'],[6,'讼',   'q','w'],[7,'师',   'n','w'],[8,'比',   'w','n'],
+  [9,'小畜', 'x','q'],[10,'履',  'q','d'],[11,'泰',  'n','q'],[12,'否',  'q','n'],
+  [13,'同人','q','l'],[14,'大有','l','q'],[15,'谦',  'n','g'],[16,'豫',  'z','n'],
+  [17,'随',  'd','z'],[18,'蛊',  'g','x'],[19,'临',  'n','d'],[20,'观',  'x','n'],
+  [21,'噬嗑','l','z'],[22,'贲',  'g','l'],[23,'剥',  'g','n'],[24,'复',  'n','z'],
+  [25,'无妄','q','z'],[26,'大畜','g','q'],[27,'颐',  'g','z'],[28,'大过','d','x'],
+  [29,'坎',  'w','w'],[30,'离',  'l','l'],[31,'咸',  'd','g'],[32,'恒',  'z','x'],
+  [33,'遁',  'q','g'],[34,'大壮','z','q'],[35,'晋',  'l','n'],[36,'明夷','n','l'],
+  [37,'家人','x','l'],[38,'睽',  'l','d'],[39,'蹇',  'w','g'],[40,'解',  'z','w'],
+  [41,'损',  'g','d'],[42,'益',  'x','z'],[43,'夬',  'd','q'],[44,'姤',  'q','x'],
+  [45,'萃',  'd','n'],[46,'升',  'n','x'],[47,'困',  'd','w'],[48,'井',  'w','x'],
+  [49,'革',  'd','l'],[50,'鼎',  'l','x'],[51,'震',  'z','z'],[52,'艮',  'g','g'],
+  [53,'渐',  'x','g'],[54,'归妹','z','d'],[55,'丰',  'z','l'],[56,'旅',  'l','g'],
+  [57,'巽',  'x','x'],[58,'兑',  'd','d'],[59,'涣',  'x','w'],[60,'节',  'w','d'],
+  [61,'中孚','x','d'],[62,'小过','z','g'],[63,'既济','w','l'],[64,'未济','l','w']
+];
+
+/* ============ 画图 ============ */
+function drawLines(cx, topY, lines, w, lh, gap){
+  // lines: 数组(1=阳,0=阴)，自上而下
+  let s='';
+  const x0 = cx - w/2;
+  for(let i=0;i<lines.length;i++){
+    const y = topY + i*(lh+gap);
+    if(lines[i]===1){
+      s += `<rect x="${x0}" y="${y}" width="${w}" height="${lh}" rx="2" fill="#222"/>`;
+    }else{
+      const seg = w*0.42;
+      s += `<rect x="${x0}" y="${y}" width="${seg}" height="${lh}" rx="2" fill="#222"/>`;
+      s += `<rect x="${x0+w-seg}" y="${y}" width="${seg}" height="${lh}" rx="2" fill="#222"/>`;
+    }
+  }
+  return s;
+}
+function trigramAt(code, cx, cy){
+  const t=TRIGRAMS[code]; const w=40, lh=7, gap=6;
+  const topY = cy - (3*lh+2*gap)/2;
+  return drawLines(cx, topY, t.lines, w, lh, gap);
+}
+function taijiSVG(){
+  return `<svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="110" cy="110" r="100" fill="#fff" stroke="#333" stroke-width="2"/>
+    <path d="M110,10 A100,100 0 0,1 110,210 A50,50 0 0,1 110,110 A50,50 0 0,0 110,10 Z" fill="#222"/>
+    <circle cx="110" cy="60" r="14" fill="#fff"/>
+    <circle cx="110" cy="160" r="14" fill="#222"/>
+    <text x="150" y="40" font-size="13" fill="#222" font-family="serif">阳</text>
+    <text x="60" y="200" font-size="13" fill="#222" font-family="serif">阴</text>
+    <text x="40" y="92" font-size="11" fill="#666" font-family="serif">阴中有阳</text>
+    <text x="128" y="150" font-size="11" fill="#666" font-family="serif">阳中有阴</text>
+  </svg>`;
+}
+function baguaSVG(){
+  const cx=160, cy=160, R=120;
+  let s = `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">`;
+  s += `<circle cx="160" cy="160" r="150" fill="#fdf6e3" stroke="#caa" stroke-width="2"/>`;
+  FUXI.forEach((code,i)=>{
+    const ang = (-90 + i*45) * Math.PI/180;
+    const x = cx + R*Math.cos(ang);
+    const y = cy + R*Math.sin(ang);
+    s += trigramAt(code, x, y-6);
+    const t = TRIGRAMS[code];
+    s += `<text x="${x}" y="${y+30}" font-size="15" font-weight="bold" text-anchor="middle" fill="#7a3b1d" font-family="serif">${t.name}</text>`;
+    s += `<text x="${x}" y="${y+46}" font-size="11" text-anchor="middle" fill="#7a7167" font-family="serif">${t.nature}</text>`;
+  });
+  s += `<circle cx="160" cy="160" r="30" fill="#fff" stroke="#caa" stroke-width="2"/>`;
+  s += `<text x="160" y="166" font-size="16" font-weight="bold" text-anchor="middle" fill="#7a3b1d" font-family="serif">八卦</text>`;
+  s += `</svg>`;
+  return s;
+}
+function hexSvg(up, low){
+  const w=46, lh=5, gap=3;
+  const lines = TRIGRAMS[up].lines.concat(TRIGRAMS[low].lines); // 上卦在上
+  const topY = 2;
+  let s = `<svg viewBox="0 0 ${w+8} 44" xmlns="http://www.w3.org/2000/svg">`;
+  s += drawLines(w/2+4, topY, lines, w, lh, gap);
+  s += `</svg>`;
+  return s;
+}
+function buildHexGrid(){
+  const grid = document.getElementById('hexGrid');
+  let html='';
+  for(const code of FUXI){ // 上卦（行）
+    for(const low of FUXI){ // 下卦（列）
+      const h = HEX.find(o=>o[2]===code && o[3]===low);
+      if(!h){ html+=`<div class="hexcell"></div>`; continue; }
+      html += `<div class="hexcell">
+        <div class="hnum">${h[0]}</div>
+        ${hexSvg(h[2],h[3])}
+        <div class="hn">${h[1]}</div>
+      </div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+
+/* ============ 课程渲染 ============ */
+let sentences = [];      // {text, el}
+let current = -1;
+let playing = false;
+const synth = ('speechSynthesis' in window) ? window.speechSynthesis : null;
+let voices = [];
+let currentVoice = null;
+
+function splitSentences(text){
+  return (text.match(/[^。！？；\n]*[。！？；]?/g)||[]).map(s=>s.trim()).filter(Boolean);
+}
+function makeLine(text, parent){
+  const parts = splitSentences(text);
+  parts.forEach(p=>{
+    const i = sentences.length;
+    const el = document.createElement('p');
+    el.className='line';
+    el.textContent = p;
+    el.dataset.i = i;
+    parent.appendChild(el);
+    sentences.push({text:p, el:el});
+  });
+}
+function addOneSentence(text, el){
+  const i = sentences.length;
+  el.dataset.i = i;
+  el.classList.add('line');
+  sentences.push({text:text, el:el});
+}
+function renderLesson(idx){
+  const lesson = window.LESSONS[idx];
+  document.getElementById('lessonSub').textContent = lesson.subtitle || '';
+  const c = document.getElementById('content');
+  c.innerHTML='';
+  sentences = []; current=-1; stopSpeak();
+
+  // 复习卡
+  const rc = document.createElement('div');
+  rc.className='review-card';
+  rc.innerHTML = `<span class="tag">📖 上节课复习</span><div id="reviewBody"></div>`;
+  c.appendChild(rc);
+  makeLine(lesson.review, rc.querySelector('#reviewBody'));
+
+  // 内容块
+  lesson.blocks.forEach(b=>{
+    if(b.t==='h'){
+      const h=document.createElement('h2'); h.className='sec'; c.appendChild(h);
+      addOneSentence(b.s, h);
+    } else if(b.t==='p'){
+      makeLine(b.s, c);
+    } else if(b.t==='case'){
+      const d=document.createElement('div'); d.className='case-card';
+      const tt=document.createElement('div'); tt.className='ct'; tt.textContent='💡 生活案例 · '+b.title; d.appendChild(tt);
+      const body=document.createElement('div'); d.appendChild(body);
+      c.appendChild(d);
+      makeLine(b.s, body);
+    } else if(b.t==='mnemonic'){
+      const d=document.createElement('div'); d.className='mnemonic';
+      const tt=document.createElement('div'); tt.className='mt'; tt.textContent='🔑 '+b.title; d.appendChild(tt);
+      const ol=document.createElement('ol'); d.appendChild(ol);
+      c.appendChild(d);
+      b.items.forEach(it=>{
+        const li=document.createElement('li'); ol.appendChild(li);
+        makeLine(it, li);
+      });
+    } else if(b.t==='diagram'){
+      const d=document.createElement('div'); d.className='diagram-wrap';
+      const svg = b.key==='taiji'?taijiSVG():baguaSVG();
+      d.innerHTML = svg + `<div class="cap">${b.caption}</div>`;
+      c.appendChild(d);
+      makeLine(b.caption, d); // 让晓晓把图讲解一遍
+    } else if(b.t==='show64'){
+      const d=document.createElement('div');
+      d.innerHTML = `<button class="mini-btn" id="openHex">🧭 点击展开：六十四卦全图</button>`;
+      c.appendChild(d);
+      d.querySelector('#openHex').addEventListener('click',()=>{
+        buildHexGrid();
+        document.getElementById('hexPanel').style.display='block';
+        s2(document.getElementById('hexPanel'));
+      });
+    } else if(b.t==='quiz'){
+      const qz=document.createElement('div'); qz.className='quiz';
+      const qh=document.createElement('div'); qh.className='qh'; qh.textContent='📝 课堂小测（费曼学习法：讲出来才是真懂）';
+      qz.appendChild(qh);
+      c.appendChild(qz);
+      b.questions.forEach((q, qi)=>{
+        const qd=document.createElement('div'); qd.className='q'; qz.appendChild(qd);
+        const qt=document.createElement('div'); qt.className='qt'; qt.textContent=(qi+1)+'. '+q.q; qd.appendChild(qt);
+        makeLine(q.q, qt); // 晓晓把问题读出来，模拟提问
+        if(q.type==='choice'){
+          q.options.forEach((opt, oi)=>{
+            const btn=document.createElement('button'); btn.className='opt'; btn.textContent=opt;
+            btn.addEventListener('click',()=>{
+              qd.querySelectorAll('.opt').forEach(o=>o.disabled=true);
+              if(oi===q.answer){ btn.classList.add('right'); }
+              else { btn.classList.add('wrong'); qd.querySelectorAll('.opt')[q.answer].classList.add('right'); }
+              let ex=document.createElement('div'); ex.className='explain';
+              ex.textContent='✅ 解析：'+q.explain; qd.appendChild(ex);
+            });
+            qd.appendChild(btn);
+          });
+        } else if(q.type==='say'){
+          const box=document.createElement('div'); box.className='say-box';
+          box.innerHTML = `<textarea placeholder="在这里用自己的话讲一遍（费曼法：假装讲给同学听）"></textarea>
+            <button class="mini-btn" id="speakModel${qi}">🔊 听示范回答</button>
+            <button class="mini-btn" id="showModel${qi}">👀 看参考答案</button>
+            <div class="explain" id="model${qi}" style="display:none">${q.model}</div>`;
+          qd.appendChild(box);
+          box.querySelector('#speakModel'+qi).addEventListener('click',()=>speak(q.model));
+          box.querySelector('#showModel'+qi).addEventListener('click',()=>{
+            box.querySelector('#model'+qi).style.display='block';
+          });
+        }
+      });
+    }
+  });
+
+  // 更新进度条 & 字幕
+  const seek=document.getElementById('seek');
+  seek.max = sentences.length-1; seek.value=0;
+  updateSubtitle();
+  if(window.scrollTo){ try{ window.scrollTo({top:0}); }catch(e){} }
+}
+
+/* ============ 工具：安全滚动（jsdom/旧浏览器无 scrollIntoView） ============ */
+function s2(el){
+  if(el && el.scrollIntoView) { try{ el.scrollIntoView({behavior:'smooth'}); }catch(e){} }
+}
+
+/* ============ 语音播放 ============ */
+function loadVoices(){
+  voices = synth.getVoices();
+  const sel=document.getElementById('voiceSel');
+  sel.innerHTML='';
+  voices.forEach((v,i)=>{
+    const o=document.createElement('option'); o.value=i;
+    o.textContent=v.name+' ('+v.lang+')';
+    sel.appendChild(o);
+  });
+  // 优先晓晓
+  const xiao = voices.findIndex(v=>/xiao\s*xia/i.test(v.name) || /xiaoxiao/i.test(v.name));
+  if(xiao>=0){ sel.value=xiao; currentVoice=voices[xiao]; }
+  else{
+    const zhs = voices.findIndex(v=>v.lang && v.lang.toLowerCase().startsWith('zh'));
+    if(zhs>=0){ sel.value=zhs; currentVoice=voices[zhs]; }
+  }
+}
+function speak(text){
+  if(!text || !synth) return;
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(currentVoice) u.voice=currentVoice;
+  u.lang='zh-CN'; u.rate=parseFloat(document.getElementById('rate').value);
+  synth.speak(u);
+}
+function playSentence(i){
+  if(i<0||i>=sentences.length) return;
+  current=i;
+  sentences.forEach(s=>s.el.classList.remove('active'));
+  const s=sentences[i];
+  s.el.classList.add('active');
+  if(s.el.scrollIntoView) s.el.scrollIntoView({behavior:'smooth', block:'center'});
+  document.getElementById('seek').value=i;
+  updateSubtitle();
+  speak(s.text);
+  playing=true;
+  document.getElementById('btnPlay').textContent='⏸ 暂停';
+  // 自动连播
+  if(synth){
+    const auto=document.getElementById('autoplay').checked;
+    synth.onend = ()=>{
+      if(auto && current < sentences.length-1){ playSentence(current+1); }
+      else { playing=false; document.getElementById('btnPlay').textContent='▶ 播放'; }
+    };
+  } else {
+    playing=false; document.getElementById('btnPlay').textContent='▶ 播放';
+  }
+}
+function stopSpeak(){
+  if(synth) synth.cancel(); playing=false;
+  document.getElementById('btnPlay').textContent='▶ 播放';
+  sentences.forEach(s=>s.el.classList.remove('active'));
+}
+function updateSubtitle(){
+  const show=document.getElementById('showSub').checked;
+  const idx=document.getElementById('subtitle').querySelector('.idx');
+  const txt=document.getElementById('subText');
+  if(!show){ document.getElementById('subtitle').style.display='none'; return; }
+  document.getElementById('subtitle').style.display='block';
+  if(current<0){ idx.textContent=''; txt.textContent='点“播放”，听晓晓老师用神经网络语音讲给你听～'; return; }
+  idx.textContent='第'+(current+1)+'/'+sentences.length+'句';
+  txt.textContent=sentences[current].text;
+}
+function togglePlay(){
+  if(playing){ stopSpeak(); return; }
+  if(current<0) playSentence(0);
+  else playSentence(current);
+}
+
+/* ============ 事件绑定 ============ */
+function init(){
+  // 课程下拉
+  const sel=document.getElementById('lessonSel');
+  window.LESSONS.forEach((l,i)=>{
+    const o=document.createElement('option'); o.value=i; o.textContent=l.title; sel.appendChild(o);
+  });
+  sel.addEventListener('change',()=>renderLesson(parseInt(sel.value)));
+
+  document.getElementById('btnPlay').addEventListener('click',togglePlay);
+  document.getElementById('btnPrev').addEventListener('click',()=>{ if(current>0) playSentence(current-1); });
+  document.getElementById('btnNext').addEventListener('click',()=>{ if(current<sentences.length-1) playSentence(current+1); });
+  document.getElementById('seek').addEventListener('input',e=>{ playSentence(parseInt(e.target.value)); });
+  document.getElementById('rate').addEventListener('input',()=>{ if(playing) playSentence(current); });
+  document.getElementById('autoplay').addEventListener('change',()=>{});
+  document.getElementById('showSub').addEventListener('change',updateSubtitle);
+  document.getElementById('voiceSel').addEventListener('change',e=>{ currentVoice=voices[parseInt(e.target.value)]; });
+
+  document.getElementById('btnReview').addEventListener('click',()=>{
+    const rb=document.querySelector('.review-card'); if(rb) s2(rb);
+    else playSentence(0);
+  });
+  document.getElementById('btnHex').addEventListener('click',()=>{
+    buildHexGrid();
+    const p=document.getElementById('hexPanel'); p.style.display='block'; s2(p);
+  });
+  document.getElementById('btnQuiz').addEventListener('click',()=>{
+    const q=document.querySelector('.quiz'); if(q) s2(q);
+  });
+  document.getElementById('btnBigger').addEventListener('click',()=>{
+    const r=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--base-font'));
+    document.documentElement.style.setProperty('--base-font',(r+2)+'px');
+  });
+  document.getElementById('btnSmaller').addEventListener('click',()=>{
+    const r=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--base-font'));
+    document.documentElement.style.setProperty('--base-font',Math.max(12,r-2)+'px');
+  });
+  // 点击正文句子跳转
+  document.getElementById('content').addEventListener('click',e=>{
+    const line=e.target.closest('.line'); if(line&&line.dataset.i!==undefined){ playSentence(parseInt(line.dataset.i)); }
+  });
+
+  if('speechSynthesis' in window){
+    loadVoices();
+    if(synth.onvoiceschanged!==undefined){ synth.onvoiceschanged=loadVoices; }
+  } else {
+    document.getElementById('subText').textContent='当前浏览器不支持语音，请用 Edge/Chrome 打开。';
+  }
+
+  renderLesson(0);
+}
+init();
+</script>
+</body>
+</html>
